@@ -1,6 +1,0 @@
-flask
-pymupdf
-spacy
-scikit-learn
-numpy
-werkzeug
