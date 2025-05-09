@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResuMatch - Comparison Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>ResuMatch Results</h1>
+            <p class="tagline">See which resume is the best match for your job</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-briefcase"></i> Job Requirements</h2>
+            <div id="jobRequirements" class="job-requirements">
+                <h3>Required Skills</h3>
+                <div id="requiredSkills" class="job-requirements-list">
+                    <!-- Skills will be inserted here dynamically -->
+                </div>
+                
+                <h3 id="experienceTitle">Experience Required</h3>
+                <p id="experienceRequired">Loading...</p>
+                
+                <h3 id="educationTitle">Education Requirements</h3>
+                <p id="educationRequired">Loading...</p>
+            </div>
+        </div>
+
+        <div class="recommendation-card">
+            <h3>Best Match for This Role</h3>
+            <div class="winning-resume" id="winningResume">Analyzing...</div>
+            <p>Based on our analysis, this resume has the highest compatibility with the job requirements.</p>
+        </div>
+
+        <div class="results-section">
+            <div class="card resume-card">
+                <h2 class="card-title"><i class="fas fa-file-alt"></i> Resume 1</h2>
+                
+                <div class="match-percentage" id="resume1MatchPercentage">0%</div>
+                <div class="match-bar-container">
+                    <div class="match-bar" id="resume1MatchBar"></div>
+                </div>
+                
+                <div class="skill-match-section">
+                    <h3>Matching Skills</h3>
+                    <div class="skill-match" id="resume1SkillMatch">
+                        <!-- Matching skills will be inserted here dynamically -->
+                    </div>
+                </div>
+                
+                <div class="section-title">Skills</div>
+                <div id="resume1Skills">
+                    <!-- Skills will be inserted here dynamically -->
+                </div>
+                
+                <div class="section-title">Education</div>
+                <div id="resume1Education">
+                    <!-- Education will be inserted here dynamically -->
+                </div>
+                
+                <div class="section-title">Previous Roles</div>
+                <div id="resume1Jobs">
+                    <!-- Job titles will be inserted here dynamically -->
+                </div>
+                
+                <div class="section-title">Organizations</div>
+                <div id="resume1Organizations">
+                    <!-- Organizations will be inserted here dynamically -->
+                </div>
+                
+                <div class="role-suggestion">
+                    <h3>Suggested Roles</h3>
+                    <div id="resume1Roles">
+                        <!-- Suggested roles will be inserted here dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card resume-card">
+                <h2 class="card-title"><i class="fas fa-file-alt"></i> Resume 2</h2>
+                
+                <div class="match-percentage" id="resume2MatchPercentage">0%</div>
+                <div class="match-bar-container">
+                    <div class="match-bar" id="resume2MatchBar"></div>
+                </div>
+                
+                <div class="skill-match-section">
+                    <h3>Matching Skills</h3>
+                    <div class="skill-match" id="resume2SkillMatch">
+                        <!-- Matching skills will be inserted here dynamically -->
+                    </div>
+                </div>
+                
+                <div class="section-title">Skills</div>
+                <div id="resume2Skills">
+                    <!-- Skills will be inserted here dynamically -->
+                </div>
+                
+                <div class="section-title">Education</div>
+                <div id="resume2Education">
+                    <!-- Education will be inserted here dynamically -->
+                </div>
+                
+                <div class="section-title">Previous Roles</div>
+                <div id="resume2Jobs">
+                    <!-- Job titles will be inserted here dynamically -->
+                </div>
+                
+                <div class="section-title">Organizations</div>
+                <div id="resume2Organizations">
+                    <!-- Organizations will be inserted here dynamically -->
+                </div>
+                
+                <div class="role-suggestion">
+                    <h3>Suggested Roles</h3>
+                    <div id="resume2Roles">
+                        <!-- Suggested roles will be inserted here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="btn-container">
+            <button class="btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i> Back to Upload
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get data from localStorage
+            const data = JSON.parse(localStorage.getItem('resumeComparisonResults'));
+            
+            if (!data) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // Update job requirements
+            const requiredSkills = document.getElementById('requiredSkills');
+            if (data.job.requirements.skills && data.job.requirements.skills.length > 0) {
+                data.job.requirements.skills.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'match-badge';
+                    badge.textContent = skill;
+                    requiredSkills.appendChild(badge);
+                });
+            } else {
+                requiredSkills.innerHTML = '<p>No specific skills mentioned in the job description.</p>';
+            }
+            
+            // Update experience requirements
+            const experienceRequired = document.getElementById('experienceRequired');
+            if (data.job.requirements.experience && data.job.requirements.experience > 0) {
+                experienceRequired.textContent = `${data.job.requirements.experience}+ years of experience`;
+            } else {
+                experienceRequired.textContent = 'No specific experience requirement mentioned.';
+            }
+            
+            // Update education requirements
+            const educationRequired = document.getElementById('educationRequired');
+            if (data.job.requirements.education && data.job.requirements.education.length > 0) {
+                educationRequired.textContent = data.job.requirements.education.join(', ');
+            } else {
+                educationRequired.textContent = 'No specific education requirement mentioned.';
+            }
+            
+            // Determine which resume has the higher match percentage
+            const winningResume = document.getElementById('winningResume');
+            if (data.resume1.match_percentage >= data.resume2.match_percentage) {
+                winningResume.textContent = 'Resume 1';
+                winningResume.style.color = 'var(--success)';
+            } else {
+                winningResume.textContent = 'Resume 2';
+                winningResume.style.color = 'var(--success)';
+            }
+            
+            // Update Resume 1 details
+            document.getElementById('resume1MatchPercentage').textContent = `${data.resume1.match_percentage}%`;
+            document.getElementById('resume1MatchBar').style.width = `${data.resume1.match_percentage}%`;
+            
+            const resume1SkillMatch = document.getElementById('resume1SkillMatch');
+            if (data.resume1.skill_match && data.resume1.skill_match.length > 0) {
+                data.resume1.skill_match.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'match-badge';
+                    badge.textContent = skill;
+                    resume1SkillMatch.appendChild(badge);
+                });
+            } else {
+                resume1SkillMatch.innerHTML = '<p>No matching skills found.</p>';
+            }
+            
+            const resume1Skills = document.getElementById('resume1Skills');
+            if (data.resume1.skills && data.resume1.skills.length > 0) {
+                data.resume1.skills.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-skill';
+                    badge.textContent = skill;
+                    resume1Skills.appendChild(badge);
+                });
+            } else {
+                resume1Skills.innerHTML = '<p>No skills detected.</p>';
+            }
+            
+            const resume1Education = document.getElementById('resume1Education');
+            if (data.resume1.education && data.resume1.education.length > 0) {
+                data.resume1.education.forEach(edu => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-edu';
+                    badge.textContent = edu;
+                    resume1Education.appendChild(badge);
+                });
+            } else {
+                resume1Education.innerHTML = '<p>No education information detected.</p>';
+            }
+            
+            const resume1Jobs = document.getElementById('resume1Jobs');
+            if (data.resume1.job_titles && data.resume1.job_titles.length > 0) {
+                data.resume1.job_titles.forEach(job => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-job';
+                    badge.textContent = job;
+                    resume1Jobs.appendChild(badge);
+                });
+            } else {
+                resume1Jobs.innerHTML = '<p>No previous roles detected.</p>';
+            }
+            
+            const resume1Organizations = document.getElementById('resume1Organizations');
+            if (data.resume1.organizations && data.resume1.organizations.length > 0) {
+                data.resume1.organizations.forEach(org => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-org';
+                    badge.textContent = org;
+                    resume1Organizations.appendChild(badge);
+                });
+            } else {
+                resume1Organizations.innerHTML = '<p>No organizations detected.</p>';
+            }
+            
+            const resume1Roles = document.getElementById('resume1Roles');
+            if (data.resume1.suggested_roles && data.resume1.suggested_roles.length > 0) {
+                data.resume1.suggested_roles.forEach(role => {
+                    const badge = document.createElement('span');
+                    badge.className = 'role-badge';
+                    badge.textContent = role;
+                    resume1Roles.appendChild(badge);
+                });
+            } else {
+                resume1Roles.innerHTML = '<p>No specific roles suggested.</p>';
+            }
+            
+            // Update Resume 2 details
+            document.getElementById('resume2MatchPercentage').textContent = `${data.resume2.match_percentage}%`;
+            document.getElementById('resume2MatchBar').style.width = `${data.resume2.match_percentage}%`;
+            
+            const resume2SkillMatch = document.getElementById('resume2SkillMatch');
+            if (data.resume2.skill_match && data.resume2.skill_match.length > 0) {
+                data.resume2.skill_match.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'match-badge';
+                    badge.textContent = skill;
+                    resume2SkillMatch.appendChild(badge);
+                });
+            } else {
+                resume2SkillMatch.innerHTML = '<p>No matching skills found.</p>';
+            }
+            
+            const resume2Skills = document.getElementById('resume2Skills');
+            if (data.resume2.skills && data.resume2.skills.length > 0) {
+                data.resume2.skills.forEach(skill => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-skill';
+                    badge.textContent = skill;
+                    resume2Skills.appendChild(badge);
+                });
+            } else {
+                resume2Skills.innerHTML = '<p>No skills detected.</p>';
+            }
+            
+            const resume2Education = document.getElementById('resume2Education');
+            if (data.resume2.education && data.resume2.education.length > 0) {
+                data.resume2.education.forEach(edu => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-edu';
+                    badge.textContent = edu;
+                    resume2Education.appendChild(badge);
+                });
+            } else {
+                resume2Education.innerHTML = '<p>No education information detected.</p>';
+            }
+            
+            const resume2Jobs = document.getElementById('resume2Jobs');
+            if (data.resume2.job_titles && data.resume2.job_titles.length > 0) {
+                data.resume2.job_titles.forEach(job => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-job';
+                    badge.textContent = job;
+                    resume2Jobs.appendChild(badge);
+                });
+            } else {
+                resume2Jobs.innerHTML = '<p>No previous roles detected.</p>';
+            }
+            
+            const resume2Organizations = document.getElementById('resume2Organizations');
+            if (data.resume2.organizations && data.resume2.organizations.length > 0) {
+                data.resume2.organizations.forEach(org => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-org';
+                    badge.textContent = org;
+                    resume2Organizations.appendChild(badge);
+                });
+            } else {
+                resume2Organizations.innerHTML = '<p>No organizations detected.</p>';
+            }
+            
+            const resume2Roles = document.getElementById('resume2Roles');
+            if (data.resume2.suggested_roles && data.resume2.suggested_roles.length > 0) {
+                data.resume2.suggested_roles.forEach(role => {
+                    const badge = document.createElement('span');
+                    badge.className = 'role-badge';
+                    badge.textContent = role;
+                    resume2Roles.appendChild(badge);
+                });
+            } else {
+                resume2Roles.innerHTML = '<p>No specific roles suggested.</p>';
+            }
+            
+            // Back button functionality
+            document.getElementById('backBtn').addEventListener('click', function() {
+                window.location.href = '/';
+            });
+            
+            // Animate match bars
+            setTimeout(() => {
+                document.getElementById('resume1MatchBar').style.transition = 'width 1.5s ease-in-out';
+                document.getElementById('resume2MatchBar').style.transition = 'width 1.5s ease-in-out';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

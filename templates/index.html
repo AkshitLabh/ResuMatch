@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResuMatch - Compare Career Profiles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>ResuMatch</h1>
+            <p class="tagline">Compare two resumes and find the perfect match for your job opening</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-file-alt"></i> Upload Resumes</h2>
+            <form id="resumeForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="resume1">Resume 1</label>
+                    <div class="file-input-container" id="resume1Container">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop your file or click to browse</p>
+                        <input type="file" id="resume1" name="resume1" class="file-input" accept=".pdf,.docx,.doc,.txt,.rtf">
+                        <div id="resume1Name" class="file-name"></div>
+                    </div>
+                    <div class="file-format-selector">
+                        <div class="format-option active" data-format="pdf">PDF</div>
+                        <div class="format-option" data-format="docx">DOCX</div>
+                        <div class="format-option" data-format="txt">TXT</div>
+                        <div class="format-option" data-format="rtf">RTF</div>
+                        <div class="file-format-info">
+                            <i class="fas fa-info-circle info-icon"></i>
+                            <div class="file-format-tooltip">
+                                Select your preferred format. Currently processing: PDF format only.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="resume2">Resume 2</label>
+                    <div class="file-input-container" id="resume2Container">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop your file or click to browse</p>
+                        <input type="file" id="resume2" name="resume2" class="file-input" accept=".pdf,.docx,.doc,.txt,.rtf">
+                        <div id="resume2Name" class="file-name"></div>
+                    </div>
+                    <div class="file-format-selector">
+                        <div class="format-option active" data-format="pdf">PDF</div>
+                        <div class="format-option" data-format="docx">DOCX</div>
+                        <div class="format-option" data-format="txt">TXT</div>
+                        <div class="format-option" data-format="rtf">RTF</div>
+                        <div class="file-format-info">
+                            <i class="fas fa-info-circle info-icon"></i>
+                            <div class="file-format-tooltip">
+                                Select your preferred format. Currently processing: PDF format only.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="jobDescription">Job Description</label>
+                    <textarea id="jobDescription" name="job_description" placeholder="Looking for a software developer with knowledge of Python, Java, and React. The ideal candidate should have at least 3 years of experience with web development and a bachelor's degree in Computer Science or related field."></textarea>
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="btn-container">
+                    <button type="submit" class="btn" id="submitBtn">
+                        <i class="fas fa-search"></i> Compare Resumes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // File upload display functionality
+    const fileInputs = document.querySelectorAll('.file-input');
+    
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            const fileNameElement = document.getElementById(`${input.id}Name`);
+            const container = document.getElementById(`${input.id}Container`);
+            
+            if (fileName) {
+                fileNameElement.style.display = 'block';
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+                
+                // Check if file is in the supported formats
+                if (!['pdf', 'docx', 'doc', 'txt', 'rtf'].includes(fileExtension)) {
+                    fileNameElement.innerHTML = `<span class="file-type-badge file-type-${fileExtension}">${fileExtension.toUpperCase()}</span> ${fileName} <br><small class="text-danger">Unsupported format. Please use PDF, DOCX, TXT, or RTF.</small>`;
+                } else {
+                    fileNameElement.innerHTML = `<span class="file-type-badge file-type-${fileExtension}">${fileExtension.toUpperCase()}</span> ${fileName}`;
+                    
+                    // Automatically select the format option that matches the uploaded file
+                    const formatParent = input.closest('.form-group').querySelector('.file-format-selector');
+                    formatParent.querySelectorAll('.format-option').forEach(opt => {
+                        opt.classList.remove('active');
+                        if (opt.dataset.format === fileExtension) {
+                            opt.classList.add('active');
+                        }
+                    });
+                }
+            } else {
+                fileNameElement.style.display = 'none';
+            }
+        });
+        
+        // Handle drag and drop
+        const container = document.getElementById(`${input.id}Container`);
+        
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            container.style.borderColor = 'var(--primary)';
+            container.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
+        });
+        
+        container.addEventListener('dragleave', () => {
+            container.style.borderColor = '#ccd';
+            container.style.backgroundColor = '';
+        });
+        
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            container.style.borderColor = '#ccd';
+            container.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                const event = new Event('change');
+                input.dispatchEvent(event);
+            }
+        });
+    });
+    
+    // Format selector functionality
+    const formatOptions = document.querySelectorAll('.format-option');
+    
+    formatOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const parent = this.parentElement;
+            parent.querySelectorAll('.format-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Update tooltip with format-specific information
+            const tooltipElement = parent.querySelector('.file-format-tooltip');
+            const format = this.dataset.format;
+            
+            switch(format) {
+                case 'pdf':
+                    tooltipElement.textContent = 'PDF format is fully supported for processing.';
+                    break;
+                case 'docx':
+                    tooltipElement.textContent = 'DOCX format is supported, but some formatting might be lost.';
+                    break;
+                case 'txt':
+                    tooltipElement.textContent = 'TXT format is supported for plain text resumes.';
+                    break;
+                case 'rtf':
+                    tooltipElement.textContent = 'RTF format is supported with basic formatting preserved.';
+                    break;
+                default:
+                    tooltipElement.textContent = 'Please select a supported format.';
+            }
+        });
+    });
+    
+    // Form submission
+    const form = document.getElementById('resumeForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        errorMessage.style.display = 'none';
+        
+        // Validate form
+        const resume1 = document.getElementById('resume1').files[0];
+        const resume2 = document.getElementById('resume2').files[0];
+        const jobDescription = document.getElementById('jobDescription').value.trim();
+        
+        if (!resume1 || !resume2) {
+            errorMessage.textContent = 'Please upload both resumes';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        // Check file formats
+        const resume1Ext = resume1.name.split('.').pop().toLowerCase();
+        const resume2Ext = resume2.name.split('.').pop().toLowerCase();
+        const supportedFormats = ['pdf', 'docx', 'doc', 'txt', 'rtf'];
+        
+        if (!supportedFormats.includes(resume1Ext) || !supportedFormats.includes(resume2Ext)) {
+            errorMessage.textContent = 'Please upload files in supported formats (PDF, DOCX, TXT, RTF)';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        // Show loading overlay
+        loadingOverlay.classList.add('active');
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('resume1', resume1);
+        formData.append('resume2', resume2);
+        formData.append('job_description', jobDescription || 'Looking for a software developer with knowledge of Python, Java, and React.');
+        
+        // Send the request
+        fetch('/api/analyze-resumes', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'An error occurred');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Store data in localStorage for the results page
+            localStorage.setItem('resumeComparisonResults', JSON.stringify(data));
+            
+            // Navigate to results page
+            window.location.href = '/result';
+        })
+        .catch(error => {
+            errorMessage.textContent = error.message;
+            errorMessage.style.display = 'block';
+        })
+        .finally(() => {
+            loadingOverlay.classList.remove('active');
+        });
+    });
+});
+    </script>
+</body>
+</html>
